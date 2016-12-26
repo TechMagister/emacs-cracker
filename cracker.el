@@ -33,7 +33,12 @@
         (location (plist-get candidate :location))
         (type (plist-get candidate :type))
         )
-    (concat (nth 1 (split-string name "#"))))
+    (setq split (split-string name "#"))
+    (if (eq (length split) 1)
+        (setq split (split-string name "\\."))
+      )
+    (nth 1 split)
+    )
   )
 
 (defun company-cracker--invoke-autocomplete ()
