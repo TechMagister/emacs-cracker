@@ -70,6 +70,13 @@
   final
   )
 
+(defun company-cracker--prefix ()
+  "Return the symbol to complete.
+Also, if point is on a dot, triggers a completion immediately."
+      (company-grab-symbol-cons "\\." 1)
+      )
+
+
 ;; do stuff
 (defun company-cracker-backend (command &optional arg &rest ignored)
   (interactive (list 'interactive))
@@ -77,7 +84,8 @@
   (case command
     (interactive (company-begin-backend 'company-cracker-backend))
     (prefix (and (eq major-mode 'crystal-mode)
-                 (company-grab-symbol)
+                 (not (company-in-string-or-comment))
+                 (or (company-cracker--prefix) 'stop)
                  ))
     (candidates (company-cracker--candidates) )
     )
