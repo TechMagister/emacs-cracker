@@ -33,11 +33,16 @@
         (location (plist-get candidate :location))
         (type (plist-get candidate :type))
         )
-    (setq split (split-string name "#"))
-    (if (eq (length split) 1)
-        (setq split (split-string name "\\."))
+    (if (string-equal type "Function")
+        (progn
+         (setq split (split-string name "#"))
+         (if (eq (length split) 1)
+             (setq split (split-string name "\\."))
+           )
+         (nth 1 split)
+         )
+      name
       )
-    (nth 1 split)
     )
   )
 
