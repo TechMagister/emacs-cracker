@@ -35,12 +35,12 @@
         )
     (if (string-equal type "Function")
         (progn
-         (setq split (split-string name "#"))
-         (if (eq (length split) 1)
-             (setq split (split-string name "\\."))
-           )
-         (nth 1 split)
-         )
+          (setq split (split-string name "#"))
+          (if (eq (length split) 1)
+              (setq split (split-string name "\\."))
+            )
+          (nth 1 split)
+          )
       name
       )
     )
@@ -63,6 +63,30 @@
     )
 
 
+
+(defun company-cracker--make-candidate (candidate)
+  "Prepare and format CANDIDATE."
+  (setq name (plist-get candidate :name))
+  (setq type (plist-get candidate :type))
+  (setq contents (if (string-equal type "Function")
+                     (progn
+                       (setq split (split-string name "#"))
+                       (if (eq (length split) 1)
+                           (setq split (split-string name "\\."))
+                         )
+                       (nth 1 split)
+                       )
+                   name
+                   ))
+  (setq contents (nth 0 (split-string contents "(")))
+  (if (and (string-equal type "Function")
+           (not (string-match "()" name)))
+      (setq contents (concat contents "("))
+      )
+  (propertize contents
+              'meta (company-cracker--format-meta candidate))
+  )
+
 (defun company-cracker--candidates ()
   (let ((json-object-type 'plist))
     (setq raw (json-read-from-string
@@ -70,7 +94,7 @@
   (setq results (append (plist-get raw :results) nil))
   (setq final (list))
   (dolist (candidate results)
-    (push (company-cracker--format-meta candidate) final)
+    (push (company-cracker--make-candidate candidate) final)
     )
   final
   )
@@ -81,6 +105,20 @@ Also, if point is on a dot, triggers a completion immediately."
       (company-grab-symbol-cons "\\." 1)
       )
 
+(defun company-cracker--annotation (meta)
+  "Do some stuff with META."
+  (print meta)
+  (if (string-match "()" meta)
+      (if (string-match ":" meta)
+          (concat ":" (nth 1 (split-string meta ":")))
+        ""
+        )
+    (if (string-match "(" meta)
+        (nth 1 (split-string meta "("))
+      ""
+      )
+    )
+  )
 
 ;; do stuff
 (defun company-cracker-backend (command &optional arg &rest ignored)
@@ -92,7 +130,9 @@ Also, if point is on a dot, triggers a completion immediately."
                  (not (company-in-string-or-comment))
                  (or (company-cracker--prefix) 'stop)
                  ))
+    (meta (get-text-property 1 'meta arg))
     (candidates (company-cracker--candidates) )
+    (annotation (company-cracker--annotation (get-text-property 0 'meta arg)))
     )
   )
 
